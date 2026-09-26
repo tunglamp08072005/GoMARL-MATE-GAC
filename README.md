@@ -14,12 +14,12 @@ The main experiment uses the MATE distributed target-coverage environment:
 
 The primary metric is the **Mean Coverage Rate (MCR)**:
 
-\[
-\mathrm{MCR}=\frac{1}{T}\sum_{t=1}^{T}\frac{1}{m}\sum_{j=1}^{m}C_{j,t},
-\]
+```text
+MCR = (1/T) * sum over t=1..T of [(1/m) * sum over j=1..m of C(j,t)]
+```
 
-where $C_{j,t}=1$ when target $j$ is covered by at least one camera at timestep
-$t$.
+Here, `C(j,t) = 1` when target `j` is covered by at least one camera at timestep
+`t`; otherwise, `C(j,t) = 0`.
 
 ## Repository layout
 
@@ -36,29 +36,28 @@ GoMARL-MATE-GAC/
 
 ## Method overview
 
-At timestep $t$, each camera encodes its observation history with a GRU:
+At timestep `t`, each camera encodes its observation history with a GRU:
 
-\[
-h_i^t=\mathrm{GRU}(o_i^t,h_i^{t-1}).
-\]
+```text
+h(i,t) = GRU(o(i,t), h(i,t-1))
+```
 
 GoMARL dynamically partitions the agents into groups. GoGAC uses that grouping to
-build a masked multi-head attention layer. Camera $i$ can attend to camera $j$
+build a masked multi-head attention layer. Camera `i` can attend to camera `j`
 only when both cameras belong to the same group. The resulting group message is
 combined with the local representation using a learned gate:
 
-\[
-\beta_i=\sigma(w_g^\top[h_i^t\Vert m_i^t]+b_g),\qquad
-h_{i,\mathrm{fused}}^t=(1-\beta_i)h_i^t+\beta_i m_i^t.
-\]
+```text
+beta(i) = sigmoid(w_g^T * concat(h(i,t), m(i,t)) + b_g)
+h_fused(i,t) = (1 - beta(i)) * h(i,t) + beta(i) * m(i,t)
+```
 
 The fused representation is used by the individual Q-network and the monotonic
 group mixer. Training combines TD learning with GoMARL's grouping regularizers:
 
-\[
-\mathcal{L}=\mathcal{L}_{TD}+\lambda_{lasso}\mathcal{L}_{lasso}
-								 +\lambda_{SD}\mathcal{L}_{SD}.
-\]
+```text
+L = L_TD + lambda_lasso * L_lasso + lambda_SD * L_SD
+```
 
 The implementation also logs the average communication gate (`comm_beta_mean`)
 and the ratio of isolated agents (`isolated_agent_ratio`).
