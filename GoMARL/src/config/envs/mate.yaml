@@ -1,0 +1,4 @@
+env: mate
+
+env_args:
+  config: "../MATE-main/mate/assets/MATE-4v6-0.yaml"
